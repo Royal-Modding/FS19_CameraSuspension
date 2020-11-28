@@ -25,7 +25,10 @@
 	<multiplayer supported="true" />
 	<iconFilename>icon.png</iconFilename>
 	<extraSourceFiles>
-		<sourceFile filename="script.lua" />
+		<sourceFile filename="lib/utility/Main.lua" />
+		<sourceFile filename="cameraSuspension.lua" />
+		<sourceFile filename="SuspensionsExtension.lua" />
+		<sourceFile filename="VehicleCameraExtension.lua" />
 	</extraSourceFiles>
 </modDesc>
 
