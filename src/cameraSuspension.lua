@@ -7,6 +7,8 @@
 
 CameraSuspension = {}
 
+addConsoleCommand("csToggleCameraSuspension", "Toggle camera suspension.", "consoleCommandToggleCameraSuspension", CameraSuspension)
+
 InitRoyalUtility(Utils.getFilename("lib/utility/", g_currentModDirectory))
 
 function CameraSuspension:loadMap()
@@ -39,6 +41,11 @@ function CameraSuspension:delete()
 end
 
 function CameraSuspension:deleteMap()
+end
+
+function CameraSuspension:consoleCommandToggleCameraSuspension()
+    VehicleCameraExtension.enabled = not VehicleCameraExtension.enabled
+    print("csToggleCameraSuspension = " .. tostring(VehicleCameraExtension.enabled))
 end
 
 addModEventListener(CameraSuspension)
