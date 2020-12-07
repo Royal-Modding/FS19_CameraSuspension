@@ -2,7 +2,7 @@
 -- Royal Utility
 --
 -- @author Royal Modding
--- @version 1.3.0.0
+-- @version 1.4.0.0
 -- @date 09/11/2020
 
 --- Utility class
@@ -282,7 +282,7 @@ end
 function Utility.split(s, sep)
     sep = sep or ":"
     local fields = {}
-    local pattern = Utility.format("([^%s]+)", sep)
+    local pattern = string.format("([^%s]+)", sep)
     s:gsub(
         pattern,
         function(c)
@@ -309,16 +309,17 @@ function Utility.renderTable(posX, posY, textSize, inputTable, maxDepth, hideFun
             return i
         end
         for k, v in pairs(t) do
-            if not hideFunc or type(v) ~= "function" then
+            local vType = type(v)
+            if not hideFunc or vType ~= "function" then
                 local offset = i * textSize * 1.05
                 setTextAlignment(RenderText.ALIGN_RIGHT)
                 renderText(x, posY - offset, textSize, tostring(k) .. " :")
                 setTextAlignment(RenderText.ALIGN_LEFT)
-                if type(v) ~= "table" then
+                if vType ~= "table" then
                     renderText(x, posY - offset, textSize, " " .. tostring(v))
                 end
                 i = i + 1
-                if type(v) == "table" then
+                if vType == "table" then
                     i = renderTableRecursively(x + textSize * 1.8, v, depth + 1, i)
                 end
             end
@@ -331,16 +332,17 @@ function Utility.renderTable(posX, posY, textSize, inputTable, maxDepth, hideFun
     setTextBold(false)
     textSize = getCorrectTextSize(textSize)
     for k, v in pairs(inputTable) do
-        if not hideFunc or type(v) ~= "function" then
+        local vType = type(v)
+        if not hideFunc or vType ~= "function" then
             local offset = i * textSize * 1.05
             setTextAlignment(RenderText.ALIGN_RIGHT)
             renderText(posX, posY - offset, textSize, tostring(k) .. " :")
             setTextAlignment(RenderText.ALIGN_LEFT)
-            if type(v) ~= "table" then
+            if vType ~= "table" then
                 renderText(posX, posY - offset, textSize, " " .. tostring(v))
             end
             i = i + 1
-            if type(v) == "table" then
+            if vType == "table" then
                 i = renderTableRecursively(posX + textSize * 1.8, v, 1, i)
             end
         end
@@ -556,4 +558,111 @@ function Utility.isChildOf(childNode, parentNode)
         pNode = getParent(pNode)
     end
     return false
+end
+
+--- Get the node index relative to root node
+---@param nodeId integer id of node
+---@param rootId integer id of root node
+---@return string nodeIndex index of node
+function Utility.nodeToIndex(nodeId, rootId)
+    local index = ""
+    if nodeId ~= nil and entityExists(nodeId) and rootId ~= nil and entityExists(rootId) and Utility.isChildOf(nodeId, rootId) then
+        index = tostring(getChildIndex(nodeId))
+        local pNode = getParent(nodeId)
+        while pNode ~= rootId and pNode ~= 0 do
+            index = string.format("%s|%s", getChildIndex(pNode), index)
+            pNode = getParent(pNode)
+        end
+    end
+    return index
+end
+
+--- Get a node id by an index
+---@param nodeIndex string index of node
+---@param rootId integer id of root node
+---@return integer nodeId id of node
+function Utility.indexToNode(nodeIndex, rootId)
+    if nodeIndex == nil or rootId == nil or not entityExists(rootId) then
+        return nil
+    end
+    local objectId = rootId
+    local indexes = Utility.split(nodeIndex, "|")
+    for _, index in pairs(indexes) do
+        index = tonumber(index)
+        if type(index) == "number" then
+            if getNumOfChildren(objectId) >= index then
+                objectId = getChildAt(objectId, index)
+            else
+                return nil
+            end
+        else
+            return nil
+        end
+    end
+    return objectId
+end
+
+--- Queries a node hierarchy
+---@param inputNode integer
+---@param func function | "function(node, name, depth) end"
+function Utility.queryNodeHierarchy(inputNode, func)
+    if not type(inputNode) == "number" or not entityExists(inputNode) or func == nil then
+        return
+    end
+    local function queryNodeHierarchyRecursively(node, depth)
+        func(node, getName(node), depth)
+        for i = 0, getNumOfChildren(node) - 1 do
+            queryNodeHierarchyRecursively(getChildAt(node, i), depth + 1)
+        end
+    end
+    local depth = 1
+    func(inputNode, getName(inputNode), depth)
+    for i = 0, getNumOfChildren(inputNode) - 1 do
+        queryNodeHierarchyRecursively(getChildAt(inputNode, i), depth + 1)
+    end
+end
+
+--- Get the hash of a node hierarchy
+---@param node integer
+---@param parent integer
+---@return string hash hash of the node hierarchy
+function Utility.getNodeHierarchyHash(node, parent)
+    if not type(node) == "number" or not entityExists(node) or not type(parent) == "number" or not entityExists(parent) then
+        return string.format("Invalid hash node:%s parent:%s", node, parent)
+    end
+    local hash = ""
+    local nodeCount = 0
+    Utility.queryNodeHierarchy(
+        node,
+        function(n, name)
+            local pos = string.format("%.1f|%.1f|%.1f", getWorldTranslation(n))
+            local rot = string.format("%.1f|%.1f|%.1f", getWorldRotation(n))
+            local sca = string.format("%.1f|%.1f|%.1f", getScale(n))
+            local index = Utility.nodeToIndex(node, parent)
+            local rbt = getRigidBodyType(n)
+            local vis = getVisibility(n)
+            hash = string.format("%s>->%s-->%s-->%s-->%s-->%s-->%s-->%s", hash, name, pos, rot, sca, index, rbt, vis)
+            nodeCount = nodeCount + 1
+        end
+    )
+    --return getMD5(string.format("%s%s_dMs5AsHZWy", hash, nodeCount))
+    return string.format("%s[(%s)]_dMs5AsHZWy", hash, nodeCount)
+end
+
+--- Queries node parents (return false to break the loop)
+---@param inputNode integer
+---@param func function | "function(node, name, depth) return true end"
+function Utility.queryNodeParents(inputNode, func)
+    if not type(inputNode) == "number" or not entityExists(inputNode) or func == nil then
+        return
+    end
+    local depth = 1
+    local pNode = inputNode
+    while pNode ~= 0 do
+        if not func(pNode, getName(pNode), depth) then
+            break
+        end
+        pNode = getParent(pNode)
+        depth = depth + 1
+    end
 end

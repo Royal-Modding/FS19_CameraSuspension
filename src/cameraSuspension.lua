@@ -5,47 +5,19 @@
 -- @version ${version}
 -- @date 27/11/2020
 
-CameraSuspension = {}
-
-addConsoleCommand("csToggleCameraSuspension", "Toggle camera suspension.", "consoleCommandToggleCameraSuspension", CameraSuspension)
-
+InitRoyalMod(Utils.getFilename("lib/rmod/", g_currentModDirectory))
 InitRoyalUtility(Utils.getFilename("lib/utility/", g_currentModDirectory))
 
-function CameraSuspension:loadMap()
-end
+CameraSuspension = RoyalMod.new(r_debug_r)
 
-function CameraSuspension:loadSavegame()
-end
+function CameraSuspension:initialize()
+    addConsoleCommand("csToggleCameraSuspension", "Toggle camera suspension.", "consoleCommandToggleCameraSuspension", self)
 
-function CameraSuspension:saveSavegame()
-end
-
-function CameraSuspension:update(dt)
-    if g_currentMission.controlledVehicle ~= nil and g_currentMission.controlledVehicle.camSuspensionNodes ~= nil then
-        for _, node in pairs(g_currentMission.controlledVehicle.camSuspensionNodes) do
-            DebugUtil.drawDebugReferenceAxisFromNode(node)
-        end
-    end
-end
-
-function CameraSuspension:mouseEvent(posX, posY, isDown, isUp, button)
-end
-
-function CameraSuspension:keyEvent(unicode, sym, modifier, isDown)
-end
-
-function CameraSuspension:draw()
-end
-
-function CameraSuspension:delete()
-end
-
-function CameraSuspension:deleteMap()
+    source(Utils.getFilename("SuspensionsExtension.lua", self.directory))
+    source(Utils.getFilename("VehicleCameraExtension.lua", self.directory))
 end
 
 function CameraSuspension:consoleCommandToggleCameraSuspension()
     VehicleCameraExtension.enabled = not VehicleCameraExtension.enabled
     print("csToggleCameraSuspension = " .. tostring(VehicleCameraExtension.enabled))
 end
-
-addModEventListener(CameraSuspension)

@@ -13,7 +13,6 @@ function VehicleCameraExtension:loadFromXML(superFunc, xmlFile, key)
     if self.isInside then
         Utility.overwrittenFunction(self, "onActivate", VehicleCameraExtension.onActivate)
         Utility.overwrittenFunction(self, "update", VehicleCameraExtension.update)
-        self.vehicle.camSuspensionNodes = {}
         self.camSuspension = {}
         self.camSuspension.enabled = false
         self.camSuspension.offset = {0, 0, 0}
