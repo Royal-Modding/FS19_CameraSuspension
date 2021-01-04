@@ -2,7 +2,7 @@
 -- Royal Mod
 --
 -- @author Royal Modding
--- @version 1.1.1.0
+-- @version 1.3.0.0
 -- @date 03/12/2020
 
 ---@class RoyalMod
@@ -42,7 +42,7 @@ function RoyalMod.new(debug, mpSync)
     mod.super.oldFunctions = {}
 
     mod.super.errorHandle = function(error)
-        g_logManager:devError("RoyalMod caught it from %s (%s)", mod.name, mod.version)
+        g_logManager:devError("[%s] RoyalMod caught error from %s (%s)", mod.name, mod.name, mod.version)
         g_logManager:error(error)
     end
 
@@ -65,14 +65,22 @@ function RoyalMod.new(debug, mpSync)
         mod.super.sync.writeStream = function(self, streamId)
             self:superClass().writeStream(self, streamId)
             if mod.onWriteStream ~= nil then
+                local time = netGetTime()
+                local offset = streamGetWriteOffset(streamId)
                 xpcall(mod.onWriteStream, mod.super.errorHandle, mod, streamId)
+                offset = streamGetWriteOffset(streamId) - offset
+                g_logManager:devInfo("[%s] Written %.0f bits (%.0f bytes) in %s ms", mod.name, offset, offset / 8, netGetTime() - time)
             end
         end
 
         mod.super.sync.readStream = function(self, streamId)
             self:superClass().readStream(self, streamId)
             if mod.onReadStream ~= nil then
+                local time = netGetTime()
+                local offset = streamGetReadOffset(streamId)
                 xpcall(mod.onReadStream, mod.super.errorHandle, mod, streamId)
+                offset = streamGetReadOffset(streamId) - offset
+                g_logManager:devInfo("[%s] Read %.0f bits (%.0f bytes) in %s ms", mod.name, offset, offset / 8, netGetTime() - time)
             end
         end
 
@@ -162,28 +170,28 @@ function RoyalMod.new(debug, mpSync)
                 self,
                 function(specName)
                     if not specAddAllowed then
-                        g_logManager:devError("addSpecialization is no more allowed")
+                        g_logManager:devError("[%s] addSpecialization is no more allowed", mod.name)
                         return
                     end
                     table.insert(specs, {name = string.format("%s.%s", mod.name, specName), addedTo = {}})
                 end,
                 function(specName, requiredSpecName)
                     if not specAddAllowed then
-                        g_logManager:devError("addSpecializationBySpecialization is no more allowed")
+                        g_logManager:devError("[%s] addSpecializationBySpecialization is no more allowed", mod.name)
                         return
                     end
                     table.insert(specsBySpec, {name = string.format("%s.%s", mod.name, specName), requiredSpecName = requiredSpecName, addedTo = {}})
                 end,
                 function(specName, requiredVehicleTypeName)
                     if not specAddAllowed then
-                        g_logManager:devError("addSpecializationByVehicleType is no more allowed")
+                        g_logManager:devError("[%s] addSpecializationByVehicleType is no more allowed", mod.name)
                         return
                     end
                     table.insert(specsByType, {name = string.format("%s.%s", mod.name, specName), requiredVehicleTypeName = requiredVehicleTypeName, addedTo = {}})
                 end,
                 function(specName, func)
                     if not specAddAllowed then
-                        g_logManager:devError("addSpecializationByFunction is no more allowed")
+                        g_logManager:devError("[%s] addSpecializationByFunction is no more allowed", mod.name)
                         return
                     end
                     table.insert(specsByFunc, {name = string.format("%s.%s", mod.name, specName), func = func, addedTo = {}})
@@ -196,33 +204,37 @@ function RoyalMod.new(debug, mpSync)
         -- remove invalid specs
         for i, spec in pairs(specs) do
             if g_specializationManager:getSpecializationByName(spec.name) == nil then
-                g_logManager:devError("Can't find specialization %s", spec.name)
+                g_logManager:devError("[%s] Can't find specialization %s", mod.name, spec.name)
                 table.remove(specs, i)
             end
         end
 
         for i, spec in pairs(specsBySpec) do
             if g_specializationManager:getSpecializationByName(spec.name) == nil then
-                g_logManager:devError("Can't find specialization %s", spec.name)
+                g_logManager:devError("[%s] Can't find specialization %s", mod.name, spec.name)
                 table.remove(specsBySpec, i)
             end
         end
 
         for i, spec in pairs(specsByType) do
             if g_specializationManager:getSpecializationByName(spec.name) == nil then
-                g_logManager:devError("Can't find specialization %s", spec.name)
+                g_logManager:devError("[%s] Can't find specialization %s", mod.name, spec.name)
                 table.remove(specsByType, i)
             end
         end
 
         for i, spec in pairs(specsByFunc) do
             if g_specializationManager:getSpecializationByName(spec.name) == nil then
-                g_logManager:devError("Can't find specialization %s", spec.name)
+                g_logManager:devError("[%s] Can't find specialization %s", mod.name, spec.name)
                 table.remove(specsByFunc, i)
             end
         end
 
+        local vehicleTypesCount = 0
+
         for typeName, typeEntry in pairs(self:getVehicleTypes()) do
+            vehicleTypesCount = vehicleTypesCount + 1
+
             -- add "global" specializations
             for _, spec in pairs(specs) do
                 if typeEntry.specializationsByName[spec.name] == nil then
@@ -230,7 +242,21 @@ function RoyalMod.new(debug, mpSync)
                         self:addSpecialization(typeName, spec.name)
                         table.insert(spec.addedTo, typeName)
                     else
-                        g_logManager:devError("Not all prerequisites of specialization %s are fulfilled by %s", spec.name, typeName)
+                        g_logManager:devError("[%s] Not all prerequisites of specialization %s are fulfilled by %s", mod.name, spec.name, typeName)
+                    end
+                end
+            end
+
+            -- add specializations by function
+            for _, spec in pairs(specsByFunc) do
+                if spec.func(typeEntry) then
+                    if typeEntry.specializationsByName[spec.name] == nil then
+                        if g_specializationManager:getSpecializationObjectByName(spec.name).prerequisitesPresent(typeEntry.specializations) then
+                            self:addSpecialization(typeName, spec.name)
+                            table.insert(spec.addedTo, typeName)
+                        else
+                            g_logManager:devError("[%s] Not all prerequisites of specialization %s are fulfilled by %s", mod.name, spec.name, typeName)
+                        end
                     end
                 end
             end
@@ -244,7 +270,7 @@ function RoyalMod.new(debug, mpSync)
                                 self:addSpecialization(typeName, spec.name)
                                 table.insert(spec.addedTo, typeName)
                             else
-                                g_logManager:devError("Not all prerequisites of specialization %s are fulfilled by %s", spec.name, typeName)
+                                g_logManager:devError("[%s] Not all prerequisites of specialization %s are fulfilled by %s", mod.name, spec.name, typeName)
                             end
                         end
                     end
@@ -259,21 +285,7 @@ function RoyalMod.new(debug, mpSync)
                             self:addSpecialization(typeName, spec.name)
                             table.insert(spec.addedTo, typeName)
                         else
-                            g_logManager:devError("Not all prerequisites of specialization %s are fulfilled by %s", spec.name, typeName)
-                        end
-                    end
-                end
-            end
-
-            -- add specializations by function
-            for _, spec in pairs(specsByFunc) do
-                if spec.func(typeEntry) then
-                    if typeEntry.specializationsByName[spec.name] == nil then
-                        if g_specializationManager:getSpecializationObjectByName(spec.name).prerequisitesPresent(typeEntry.specializations) then
-                            self:addSpecialization(typeName, spec.name)
-                            table.insert(spec.addedTo, typeName)
-                        else
-                            g_logManager:devError("Not all prerequisites of specialization %s are fulfilled by %s", spec.name, typeName)
+                            g_logManager:devError("[%s] Not all prerequisites of specialization %s are fulfilled by %s", mod.name, spec.name, typeName)
                         end
                     end
                 end
@@ -281,19 +293,35 @@ function RoyalMod.new(debug, mpSync)
         end
 
         for _, spec in pairs(specs) do
-            g_logManager:devInfo("%s added to [%s]", spec.name, table.concat(spec.addedTo, ", "))
+            if #spec.addedTo <= 25 then
+                g_logManager:devInfo("[%s] %s added to [%s]", mod.name, spec.name, table.concat(spec.addedTo, ", "))
+            else
+                g_logManager:devInfo("[%s] %s added to %s vehicle types out of %s", mod.name, spec.name, #spec.addedTo, vehicleTypesCount)
+            end
         end
 
         for _, spec in pairs(specsBySpec) do
-            g_logManager:devInfo("%s added to [%s]", spec.name, table.concat(spec.addedTo, ", "))
+            if #spec.addedTo <= 25 then
+                g_logManager:devInfo("[%s] %s added to [%s]", mod.name, spec.name, table.concat(spec.addedTo, ", "))
+            else
+                g_logManager:devInfo("[%s] %s added to %s vehicle types out of %s", mod.name, spec.name, #spec.addedTo, vehicleTypesCount)
+            end
         end
 
         for _, spec in pairs(specsByType) do
-            g_logManager:devInfo("%s added to [%s]", spec.name, table.concat(spec.addedTo, ", "))
+            if #spec.addedTo <= 25 then
+                g_logManager:devInfo("[%s] %s added to [%s]", mod.name, spec.name, table.concat(spec.addedTo, ", "))
+            else
+                g_logManager:devInfo("[%s] %s added to %s vehicle types out of %s", mod.name, spec.name, #spec.addedTo, vehicleTypesCount)
+            end
         end
 
         for _, spec in pairs(specsByFunc) do
-            g_logManager:devInfo("%s added to [%s]", spec.name, table.concat(spec.addedTo, ", "))
+            if #spec.addedTo <= 25 then
+                g_logManager:devInfo("[%s] %s added to [%s]", mod.name, spec.name, table.concat(spec.addedTo, ", "))
+            else
+                g_logManager:devInfo("[%s] %s added to %s vehicle types out of %s", mod.name, spec.name, #spec.addedTo, vehicleTypesCount)
+            end
         end
 
         mod.super.oldFunctions.VehicleTypeManagerfinalizeVehicleTypes(self, ...)

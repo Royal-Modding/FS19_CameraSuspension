@@ -14,6 +14,11 @@ function VehicleCameraExtension:loadFromXML(superFunc, xmlFile, key)
         Utility.overwrittenFunction(self, "onActivate", VehicleCameraExtension.onActivate)
         Utility.overwrittenFunction(self, "update", VehicleCameraExtension.update)
         self.camSuspension = {}
+        if g_server == nil then
+            self.camSuspension.mpMultiplier = 1.1
+        else
+            self.camSuspension.mpMultiplier = 1
+        end
         self.camSuspension.enabled = false
         self.camSuspension.offset = {0, 0, 0}
         self.camSuspension.targetOffset = {0, 0, 0}
@@ -26,9 +31,9 @@ Utility.overwrittenFunction(VehicleCamera, "loadFromXML", VehicleCameraExtension
 function VehicleCameraExtension:update(superFunc, dt)
     if self.camSuspension ~= nil and self.camSuspension.enabled and VehicleCameraExtension.enabled then
         self.camSuspension.targetOffset = Suspensions.getSuspensionModfiers(self.vehicle)
-        self.camSuspension.targetOffset[1] = self.camSuspension.targetOffset[1] * 0.9
-        self.camSuspension.targetOffset[2] = self.camSuspension.targetOffset[2] * 0.9
-        self.camSuspension.targetOffset[3] = self.camSuspension.targetOffset[3] * 0.9
+        self.camSuspension.targetOffset[1] = self.camSuspension.targetOffset[1] * 0.7 * self.camSuspension.mpMultiplier
+        self.camSuspension.targetOffset[2] = self.camSuspension.targetOffset[2] * 0.9 * self.camSuspension.mpMultiplier
+        self.camSuspension.targetOffset[3] = self.camSuspension.targetOffset[3] * 0.7 * self.camSuspension.mpMultiplier
 
         self.camSuspension.offset[1], self.camSuspension.offset[2], self.camSuspension.offset[3] =
             self:getSmoothed(
