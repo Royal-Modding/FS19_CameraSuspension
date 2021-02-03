@@ -1,9 +1,8 @@
---
--- ${title}
---
--- @author ${author}
--- @version ${version}
--- @date 28/11/2020
+---${title}
+
+---@author ${author}
+---@version r_version_r
+---@date 28/11/2020
 
 function Suspensions.getSuspensionModfiers(self)
     local spec = self.spec_suspensions
