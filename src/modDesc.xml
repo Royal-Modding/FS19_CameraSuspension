@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" standalone="no" ?>
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
 <modDesc descVersion="${descVersion}">
 	<author>${author}</author>
 	<version>${version}</version>
@@ -10,33 +10,36 @@
 			<![CDATA[
 In real life you would never see your seat and armrest swinging up and down because your entire body is on it.
 This mod aims to fix this issue, that happens when you are driving from cab view, by allowing the camera to follow smoothly the cab and seat movements.
+You can open the mod's settings panel by pressing RSHIFT + R, every user will have it's own settings in multiplayer matches.
 Enjoy this new driving experience and have fun.
 
-Changelog 1.1.0.0:
-- Improved side oscillations
-- Improved behavior on multiplayer
+Changelog ${version}:
+- Added enable / disable setting
+- Added suspension stiffness setting
 ]]>
 		</en>
 		<de>
 			<![CDATA[
 Im echten Leben würden Sie nie sehen, dass Ihr Sitz und die Armlehne auf und ab schwingen, weil Ihr ganzer Körper darauf ist.
 Diese Mod zielt darauf ab, dieses Problem zu beheben, das auftritt, wenn Sie aus der Kabinenansicht fahren, indem die Kamera den Bewegungen der Kabine und des Sitzes reibungslos folgt.
+Du kannst das Einstellungsfeld des Mods öffnen, indem du RSHIFT + R drückst. Jeder Benutzer hat seine eigenen Einstellungen in Multiplayer-Matches.
 Genießen Sie dieses neue Fahrerlebnis und haben Sie Spaß.
 
-Changelog 1.1.0.0:
-- Verbesserte Seitenschwingungen
-- Verbesserte Verhalten im Multiplayer
+Changelog ${version}:
+- Aktivierungs- / Deaktivierungseinstellung hinzugefügt
+- Einstellung der Aufhängungssteifigkeit hinzugefügt
 ]]>
 		</de>
 		<fr>
 			<![CDATA[
 Dans la vraie vie, vous ne verrait jamais votre siège et l’accoudoir se balancer de haut en bas parce que tout votre corps est sur elle.
 Ce mod vise à résoudre ce problème, qui se produit lorsque vous conduisez à partir de la vue de la cabine, en permettant à la caméra de suivre en douceur les mouvements de la cabine et du siège.
+Vous pouvez ouvrir le panneau des paramètres du mod en appuyant sur RSHIFT + R, chaque utilisateur aura ses propres paramètres dans les matchs multijoueurs.
 Profitez de cette nouvelle expérience de conduite et amusez-vous.
 
-Changelog 1.1.0.0:
-- Oscillations latérales améliorées
-- Amélioration du comportement en multijoueur
+Changelog ${version}:
+- Ajout du paramètre d'activation / désactivation
+- Ajout du réglage de la rigidité de la suspension
 ]]>
 		</fr>
 	</description>
@@ -45,6 +48,29 @@ Changelog 1.1.0.0:
 	<extraSourceFiles>
 		<sourceFile filename="lib/rmod/Main.lua" />
 		<sourceFile filename="lib/utility/Main.lua" />
+		<sourceFile filename="lib/rset/Main.lua" />
 		<sourceFile filename="cameraSuspension.lua" />
 	</extraSourceFiles>
+
+	<l10n>
+		<text name="cs_mod_settings_title">
+			<en>Camera Suspension</en>
+		</text>
+		<text name="cs_setting_enabled">
+			<en>Enabled</en>
+			<de>Aktiviert</de>
+		</text>
+		<text name="cs_setting_enabled_tooltip">
+			<en>Whether to enable or not the camera suspension.</en>
+			<de>Gibt an, ob die Kameraaufhängung aktiviert werden soll oder nicht.</de>
+		</text>
+		<text name="cs_setting_stiffness">
+			<en>Suspension stiffness</en>
+			<de>Federungssteifigkeit</de>
+		</text>
+		<text name="cs_setting_stiffness_tooltip">
+			<en>Sets the seat suspension stiffness.</en>
+			<de>Stellt die Steifigkeit der Sitzfederung ein.</de>
+		</text>
+	</l10n>
 </modDesc>
