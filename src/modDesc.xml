@@ -59,18 +59,22 @@ Changelog ${version}:
 		<text name="cs_setting_enabled">
 			<en>Enabled</en>
 			<de>Aktiviert</de>
+			<pl>Włączone</pl>
 		</text>
 		<text name="cs_setting_enabled_tooltip">
 			<en>Whether to enable or not the camera suspension.</en>
 			<de>Gibt an, ob die Kameraaufhängung aktiviert werden soll oder nicht.</de>
+			<pl>Włącza amortyzację kamery.</pl>
 		</text>
 		<text name="cs_setting_stiffness">
 			<en>Suspension stiffness</en>
 			<de>Federungssteifigkeit</de>
+			<pl>Sztywność amortyzacji</pl>
 		</text>
 		<text name="cs_setting_stiffness_tooltip">
 			<en>Sets the seat suspension stiffness.</en>
 			<de>Stellt die Steifigkeit der Sitzfederung ein.</de>
+			<pl>Ustawia sztywność amortyzacji siedzenia.</pl>
 		</text>
 	</l10n>
 </modDesc>
